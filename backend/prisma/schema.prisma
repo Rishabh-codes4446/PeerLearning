@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  bio       String?
+  subjects  String[]
+  rating    Float    @default(0)
+  createdAt DateTime @default(now())
+
+  slotsAsTutor      Slot[]    @relation("TutorSlots")
+  bookingsAsStudent Booking[] @relation("StudentBookings")
+  reviewsGiven      Review[]  @relation("ReviewsGiven")
+  reviewsReceived   Review[]  @relation("ReviewsReceived")
+  messages          Message[]
+}
+
+model Slot {
+  id        String     @id @default(uuid())
+  tutorId   String
+  tutor     User       @relation("TutorSlots", fields: [tutorId], references: [id])
+  startTime DateTime
+  endTime   DateTime
+  status    SlotStatus @default(AVAILABLE)
+  booking   Booking?
+}
+
+model Booking {
+  id        String        @id @default(uuid())
+  slotId    String        @unique
+  slot      Slot          @relation(fields: [slotId], references: [id])
+  studentId String
+  student   User          @relation("StudentBookings", fields: [studentId], references: [id])
+  status    BookingStatus @default(CONFIRMED)
+  createdAt DateTime      @default(now())
+  messages  Message[]
+  reviews   Review[]
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  bookingId  String
+  booking    Booking  @relation(fields: [bookingId], references: [id])
+  giverId    String
+  giver      User     @relation("ReviewsGiven", fields: [giverId], references: [id])
+  receiverId String
+  receiver   User     @relation("ReviewsReceived", fields: [receiverId], references: [id])
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  TUTOR
+  STUDENT
+}
+
+enum SlotStatus {
+  AVAILABLE
+  BOOKED
+  EXPIRED
+}
+
+enum BookingStatus {
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NOSHOW
+}
