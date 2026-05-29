@@ -1,8 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import { io } from '../server.js'
-
-const prisma = new PrismaClient()
-
+import prisma from '../utils/prisma.js'
 export const createSlot = async (req, res) => {
   const { startTime, endTime } = req.body
   const tutorId = req.user.userId
