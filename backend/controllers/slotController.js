@@ -1,8 +1,8 @@
 import { PrismaClient } from '@prisma/client'
+import { io } from '../server.js'
 
 const prisma = new PrismaClient()
 
-// Tutor creates a slot
 export const createSlot = async (req, res) => {
   const { startTime, endTime } = req.body
   const tutorId = req.user.userId
@@ -16,7 +16,6 @@ export const createSlot = async (req, res) => {
   }
 }
 
-// Get all available slots (students browse these)
 export const getAvailableSlots = async (req, res) => {
   try {
     const slots = await prisma.slot.findMany({
@@ -29,7 +28,6 @@ export const getAvailableSlots = async (req, res) => {
   }
 }
 
-// Student books a slot
 export const bookSlot = async (req, res) => {
   const { slotId } = req.params
   const studentId = req.user.userId
@@ -38,7 +36,6 @@ export const bookSlot = async (req, res) => {
     if (!slot || slot.status !== 'AVAILABLE')
       return res.status(400).json({ error: 'Slot not available' })
 
-    // Transaction — lock slot and create booking together
     const [updatedSlot, booking] = await prisma.$transaction([
       prisma.slot.update({
         where: { id: slotId },
@@ -48,13 +45,19 @@ export const bookSlot = async (req, res) => {
         data: { slotId, studentId }
       })
     ])
+
+    // Notify tutor in real time
+    io.to(slot.tutorId).emit('new-booking', {
+      message: `Your slot on ${slot.startTime} has been booked!`,
+      bookingId: booking.id
+    })
+
     res.status(201).json({ booking, slot: updatedSlot })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
 }
 
-// Get all bookings for logged-in user
 export const getMyBookings = async (req, res) => {
   const userId = req.user.userId
   const role = req.user.role
