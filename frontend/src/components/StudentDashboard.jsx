@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import ChatBox from './ChatBox'
 
 export default function StudentDashboard({ user }) {
   const [slots, setSlots] = useState([])
@@ -81,27 +82,25 @@ export default function StudentDashboard({ user }) {
         </div>
       )}
 
-      {tab === 'bookings' && (
-        <div className="space-y-4">
-          {bookings.length === 0 && <p className="text-gray-400 text-sm">No bookings yet.</p>}
-          {bookings.map(b => (
-            <div key={b.id} className="bg-white rounded-xl border p-5 flex justify-between items-center">
-              <div>
-                <p className="font-medium text-gray-800">Session booked</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  🕐 {new Date(b.slot.startTime).toLocaleString()}
-                </p>
-              </div>
-              <span className={`text-xs px-3 py-1 rounded-full font-medium
-                ${b.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
-                  b.status === 'COMPLETED' ? 'bg-blue-100 text-blue-700' :
-                  'bg-red-100 text-red-700'}`}>
-                {b.status}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      {bookings.map(b => (
+     <div key={b.id} className="bg-white rounded-xl border p-5">
+     <div className="flex justify-between items-center mb-4">
+      <div>
+        <p className="font-medium text-gray-800">Session booked</p>
+        <p className="text-xs text-gray-400 mt-1">
+          🕐 {new Date(b.slot.startTime).toLocaleString()}
+        </p>
+      </div>
+      <span className={`text-xs px-3 py-1 rounded-full font-medium
+        ${b.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
+          b.status === 'COMPLETED' ? 'bg-blue-100 text-blue-700' :
+          'bg-red-100 text-red-700'}`}>
+        {b.status}
+      </span>
+    </div>
+    <ChatBox bookingId={b.id} currentUserId={user.id} />
+   </div>
+   ))}
     </div>
   )
 }

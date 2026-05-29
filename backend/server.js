@@ -4,11 +4,10 @@ import dotenv from 'dotenv'
 import { createServer } from 'http'
 import authRoutes from './routes/authRoutes.js'
 import slotRoutes from './routes/slotRoutes.js'
+import userRoutes from './routes/userRoutes.js'
+import messageRoutes from './routes/messageRoutes.js'
 import { startCronJobs } from './services/cronService.js'
 import { initSocket } from './services/socketService.js'
-import reviewRoutes from './routes/reviewRoutes.js'
-import userRoutes from './routes/userRoutes.js'
-
 
 dotenv.config()
 
@@ -20,11 +19,8 @@ app.use(express.json())
 
 app.use('/api/auth', authRoutes)
 app.use('/api/slots', slotRoutes)
-
 app.use('/api/users', userRoutes)
-
-// after slots route
-app.use('/api/reviews', reviewRoutes)
+app.use('/api/messages', messageRoutes)
 
 export const io = initSocket(server)
 
