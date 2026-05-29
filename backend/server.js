@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import authRoutes from './routes/authRoutes.js'
+import slotRoutes from './routes/slotRoutes.js'
 
 dotenv.config()
 
@@ -10,6 +11,7 @@ app.use(cors())
 app.use(express.json())
 
 app.use('/api/auth', authRoutes)
+app.use('/api/slots', slotRoutes)
 
 app.get('/', (req, res) => res.json({ message: 'PeerLearning API running ✅' }))
 
