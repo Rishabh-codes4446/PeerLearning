@@ -1,5 +1,6 @@
-import { PrismaClient } from '@prisma/client'
 import prisma from '../utils/prisma.js'
+import { io } from '../server.js'
+
 export const createSlot = async (req, res) => {
   const { startTime, endTime } = req.body
   const tutorId = req.user.userId
@@ -43,7 +44,6 @@ export const bookSlot = async (req, res) => {
       })
     ])
 
-    // Notify tutor in real time
     io.to(slot.tutorId).emit('new-booking', {
       message: `Your slot on ${slot.startTime} has been booked!`,
       bookingId: booking.id
@@ -55,15 +55,68 @@ export const bookSlot = async (req, res) => {
   }
 }
 
+export const getSlotsByTutor = async (req, res) => {
+  try {
+    const slots = await prisma.slot.findMany({
+      where: {
+        tutorId: req.params.id,
+        status: 'AVAILABLE',
+        startTime: { gte: new Date() }
+      },
+      orderBy: { startTime: 'asc' }
+    })
+    res.json(slots)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Failed to fetch slots' })
+  }
+}
+
 export const getMyBookings = async (req, res) => {
   const userId = req.user.userId
-  const role = req.user.role
   try {
     const bookings = await prisma.booking.findMany({
-      where: role === 'STUDENT' ? { studentId: userId } : { slot: { tutorId: userId } },
-      include: { slot: true, student: { select: { name: true, email: true } } }
+      where: {
+        OR: [
+          { studentId: userId },
+          { slot: { tutorId: userId } }
+        ]
+      },
+      include: {
+        slot: {
+          include: {
+            tutor: { select: { id: true, name: true, email: true } }
+          }
+        },
+        student: { select: { id: true, name: true, email: true } }
+      },
+      orderBy: { createdAt: 'desc' }
     })
     res.json(bookings)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+}
+export const getMySlots = async (req, res) => {
+  try {
+    const slots = await prisma.slot.findMany({
+      where: { tutorId: req.user.userId },
+      orderBy: { startTime: 'asc' }
+    })
+    res.json(slots)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+}
+
+export const deleteSlot = async (req, res) => {
+  try {
+    const slot = await prisma.slot.findUnique({ where: { id: req.params.slotId } })
+    if (!slot) return res.status(404).json({ error: 'Slot not found' })
+    if (slot.tutorId !== req.user.userId) return res.status(403).json({ error: 'Not authorised' })
+    if (slot.status === 'BOOKED') return res.status(400).json({ error: 'Cannot delete a booked slot' })
+    await prisma.slot.delete({ where: { id: req.params.slotId } })
+    res.json({ message: 'Slot deleted' })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

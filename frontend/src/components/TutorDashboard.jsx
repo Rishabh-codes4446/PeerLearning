@@ -23,7 +23,7 @@ export default function TutorDashboard({ user }) {
       await axios.post('http://localhost:8000/api/slots', form, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setMsg('Slot created!')
+      setMsg('Slot created successfully!')
       setForm({ startTime: '', endTime: '' })
       setTimeout(() => setMsg(''), 3000)
     } catch (err) {
@@ -33,36 +33,40 @@ export default function TutorDashboard({ user }) {
 
   return (
     <div>
-      <div className="flex gap-4 mb-6">
-        <button onClick={() => setTab('bookings')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === 'bookings' ? 'bg-blue-600 text-white' : 'bg-white border text-gray-600'}`}>
-          My Bookings ({bookings.length})
-        </button>
-        <button onClick={() => setTab('create')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium ${tab === 'create' ? 'bg-blue-600 text-white' : 'bg-white border text-gray-600'}`}>
-          + Create Slot
-        </button>
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-white mb-1">Tutor Dashboard</h1>
+        <p className="text-white/40 text-sm">Manage your sessions and availability</p>
+      </div>
+
+      <div className="flex items-center gap-3 mb-6">
+        {['bookings', 'create'].map(t => (
+          <button key={t} onClick={() => setTab(t)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition
+              ${tab === t ? 'bg-white text-black' : 'text-white/40 hover:text-white'}`}>
+            {t === 'bookings' ? `Bookings (${bookings.length})` : '+ New slot'}
+          </button>
+        ))}
       </div>
 
       {tab === 'create' && (
-        <div className="bg-white rounded-xl border p-6 max-w-md">
-          <h2 className="font-semibold text-gray-800 mb-4">Create a new slot</h2>
-          {msg && <p className="text-sm text-green-600 mb-3">{msg}</p>}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6 max-w-md">
+          <h2 className="text-white font-medium mb-4">Create availability slot</h2>
+          {msg && <p className="text-green-400 text-sm mb-4">{msg}</p>}
           <form onSubmit={createSlot} className="space-y-4">
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Start Time</label>
+              <label className="text-white/40 text-xs mb-1.5 block">Start time</label>
               <input type="datetime-local" required
-                className="w-full border rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-white/30 transition"
                 value={form.startTime} onChange={e => setForm({...form, startTime: e.target.value})} />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">End Time</label>
+              <label className="text-white/40 text-xs mb-1.5 block">End time</label>
               <input type="datetime-local" required
-                className="w-full border rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-white/30 transition"
                 value={form.endTime} onChange={e => setForm({...form, endTime: e.target.value})} />
             </div>
-            <button className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700">
-              Create Slot
+            <button className="w-full bg-white text-black py-2.5 rounded-lg text-sm font-semibold hover:bg-white/90 transition">
+              Create slot
             </button>
           </form>
         </div>
@@ -70,19 +74,24 @@ export default function TutorDashboard({ user }) {
 
       {tab === 'bookings' && (
         <div className="space-y-4">
-          {bookings.length === 0 && <p className="text-gray-400 text-sm">No bookings yet.</p>}
+          {bookings.length === 0 && <p className="text-white/30 text-sm">No bookings yet.</p>}
           {bookings.map(b => (
-            <div key={b.id} className="bg-white rounded-xl border p-5 flex justify-between items-center">
-              <div>
-                <p className="font-medium text-gray-800">{b.student?.name}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  🕐 {new Date(b.slot.startTime).toLocaleString()}
-                </p>
+            <div key={b.id} className="bg-white/5 border border-white/10 rounded-xl p-5 flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white font-semibold text-sm">
+                  {b.student?.name?.[0]}
+                </div>
+                <div>
+                  <p className="text-white font-medium text-sm">{b.student?.name}</p>
+                  <p className="text-white/30 text-xs mt-0.5">
+                    {new Date(b.slot.startTime).toLocaleString()}
+                  </p>
+                </div>
               </div>
               <span className={`text-xs px-3 py-1 rounded-full font-medium
-                ${b.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
-                  b.status === 'COMPLETED' ? 'bg-blue-100 text-blue-700' :
-                  'bg-red-100 text-red-700'}`}>
+                ${b.status === 'CONFIRMED' ? 'bg-green-500/10 text-green-400' :
+                  b.status === 'COMPLETED' ? 'bg-blue-500/10 text-blue-400' :
+                  'bg-red-500/10 text-red-400'}`}>
                 {b.status}
               </span>
             </div>

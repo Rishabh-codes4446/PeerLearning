@@ -11,16 +11,18 @@ model User {
   name      String
   email     String   @unique
   password  String
-  role      Role
+  isTutor   Boolean  @default(false)
   bio       String?
   subjects  String[]
   rating    Float    @default(0)
   createdAt DateTime @default(now())
 
-  slotsAsTutor      Slot[]    @relation("TutorSlots")
+  slots             Slot[]    @relation("TutorSlots")
   bookingsAsStudent Booking[] @relation("StudentBookings")
   reviewsGiven      Review[]  @relation("ReviewsGiven")
   reviewsReceived   Review[]  @relation("ReviewsReceived")
+  groupClasses   GroupClass[]  @relation("TutorGroupClasses")
+  enrollments    Enrollment[]  @relation("StudentEnrollments")
   messages          Message[]
 }
 
@@ -68,12 +70,39 @@ model Message {
   content   String
   createdAt DateTime @default(now())
 }
-
-enum Role {
-  TUTOR
-  STUDENT
+model GroupClass {
+  id          String   @id @default(uuid())
+  tutorId     String
+  tutor       User     @relation("TutorGroupClasses", fields: [tutorId], references: [id])
+  title       String
+  subject     String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  maxSeats    Int      @default(30)
+  price       Float    @default(0)
+  status      GroupClassStatus @default(UPCOMING)
+  createdAt   DateTime @default(now())
+  enrollments Enrollment[]
 }
 
+model Enrollment {
+  id           String     @id @default(uuid())
+  groupClassId String
+  groupClass   GroupClass @relation(fields: [groupClassId], references: [id])
+  studentId    String
+  student      User       @relation("StudentEnrollments", fields: [studentId], references: [id])
+  createdAt    DateTime   @default(now())
+
+  @@unique([groupClassId, studentId])
+}
+
+enum GroupClassStatus {
+  UPCOMING
+  LIVE
+  COMPLETED
+  CANCELLED
+}
 enum SlotStatus {
   AVAILABLE
   BOOKED
